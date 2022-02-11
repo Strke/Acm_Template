@@ -3,66 +3,65 @@
 ```c++
 #include<iostream>
 #include<algorithm>
-#include<queue>
 #include<string.h>
+#include<queue>
 using namespace std;
-const int inf=0x3f3f3f3f;
-const int N=4e4+5,M=2*N;
-int h[N],ne[M],to[M],e[M],idx,n;
-void add(int x,int y){
-    to[idx]=y;ne[idx]=h[x];h[x]=idx++;
+const int N = 1e4 + 5, M = 2 * N, inf = 0x3f3f3f3f;
+int h[N], ne[M], to[M], e[M], idx;
+int fa[N][15], depth[N], dist[N];
+//fa数组为倍增数组， depth数组为每个节点的深度
+void add(int x, int y, int z){
+    e[idx] = z;to[idx] = y; ne[idx] = h[x]; h[x] = idx ++;
 }
-int fa[N][16],depth[N];
 void bfs(int root){
-    memset(depth,inf,sizeof depth);
-    depth[0]=0;depth[root]=1;
+    memset(depth, inf, sizeof depth);
     queue<int> q;
     q.push(root);
+    depth[root] = 1;depth[0] = 0;
+    dist[0] = 0;dist[root] = 0;
     while(q.size()){
-        int ver=q.front();q.pop();
-        for(int i=h[ver];i!=-1;i=ne[i]){
-            int j=to[i];
-            if(depth[j]>depth[ver]+1){
-                depth[j]=depth[ver]+1;
+        int p = q.front();
+        q.pop();
+        for(int i = h[p]; ~i; i = ne[i]){
+            int j = to[i];
+            if(depth[j] > depth[p] + 1){
+                depth[j] = depth[p] + 1;
+                dist[j] = dist[p] + e[i];
                 q.push(j);
-                fa[j][0]=ver;
-                for(int i=1;i<=15;i++){
-                    fa[j][i]=fa[fa[j][i-1]][i-1];
-                }
+                fa[j][0] = p;
+                for(int k = 1; k < 15; k ++) 
+                    fa[j][k] = fa[fa[j][k - 1]][k - 1];
             }
         }
     }
 }
-int lca(int a,int b){
-    if(depth[a]<depth[b]) swap(a,b);
-    for(int i=15;i>=0;i--){
-        if(depth[fa[a][i]]>=depth[b])
-            a=fa[a][i];
-    }
-    if(a==b) return b;
-    for(int i=15;i>=0;i--){
-        if(fa[a][i]!=fa[b][i]){
-            a=fa[a][i];b=fa[b][i];
+int lca(int a, int b){
+    if(depth[a] < depth[b]) swap(a, b);
+    int sa = a, sb = b;
+    for(int i = 14; i >= 0; i --) 
+        if(depth[fa[a][i]] >= depth[b])
+            a = fa[a][i];
+    if(a == b) return dist[sa] - dist[sb];
+    for(int i = 14; i >= 0; i --)
+        if(fa[a][i] != fa[b][i]){
+            a = fa[a][i];
+            b = fa[b][i];
         }
-    }
-    return fa[a][0];
+    int p = fa[a][0];
+    return dist[sa] + dist[sb] - 2 * dist[p];
 }
+
 int main(){
-    cin>>n;int root,a,b;
-    memset(h,-1,sizeof h);
-    for(int i=0;i<n;i++){
-        cin>>a>>b;
-        if(b==-1) root=a;
-        add(a,b);add(b,a);
+    int n, m, x, y, k;cin >> n >> m;
+    memset(h, -1, sizeof h);
+    for(int i = 1; i < n; i ++){
+        cin >> x >> y >> k;
+        add(x, y, k); add(y, x, k);
     }
-    bfs(root);
-    int m;cin>>m;
-    while(m--){
-        cin>>a>>b;
-        int p=lca(a,b);
-        if(p==a) cout<<"1"<<endl;
-        else if(p==b) cout<<"2"<<endl;
-        else cout<<"0"<<endl;
+    bfs(1);
+    for(int i = 0; i < m; i ++){
+        cin >> x >> y;
+        cout << lca(x, y) << endl;
     }
     return 0;
 }
